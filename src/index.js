@@ -1,12 +1,31 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import * as serviceWorker from './serviceWorker';
+import React from "react";
+import { render } from "react-dom";
+import "./styles/index.css";
+import App from "./components/App";
+import { BrowserRouter as Router } from "react-router-dom";
+import { getToken } from "./token";
 
-ReactDOM.render(<App />, document.getElementById('root'));
+import { Provider, Client, dedupExchange, fetchExchange } from "urql";
+import { cacheExchange } from "@urql/exchange-graphcache";
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();
+const cache = cacheExchange({});
+
+const client = new Client({
+  url: `http://localhost:4000`,
+  fetchOptions: () => {
+    const token = getToken();
+    return {
+      headers: { authorization: token ? `Bearer ${token}` : "" }
+    };
+  },
+  exchanges: [dedupExchange, cache, fetchExchange]
+});
+
+render(
+  <Router>
+    <Provider value={client}>
+      <App />
+    </Provider>
+  </Router>,
+  document.getElementById("root")
+);
